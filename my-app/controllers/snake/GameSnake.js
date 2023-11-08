@@ -1,7 +1,7 @@
 "use client";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import Wall from "../../components/essence/Wall";
+import SpawnController from "./SpawnController";
 
 export default class GameSnake {
   static get instance() {
@@ -14,21 +14,21 @@ export default class GameSnake {
   static _instance = null;
 
   constructor() {
-    this.level = new THREE.Group();
     this.fov = 100;
     this.aspect = window.innerWidth / window.innerHeight;
     this.near = 0.1;
     this.far = 100;
-    this.areaWidth = 20;
-    this.areaHeight = 16;
+    this.areaWidth = 50;
+    this.areaHeight = 40;
     this.boxDepth = 1;
-
-    this.wallHeight = 2;
-    this.wallHor = new Wall(this.areaWidth, this.wallHeight);
-    this.wallVert = new Wall(this.areaHeight, this.wallHeight);
 
     this.onWindowResize = this.onWindowResize.bind(this);
     this.isIntersected;
+
+    //Options
+    this.wallHeight = 2;
+    this.snakePartWidth = 0.5;
+    this.snakeWidth = 5;
   }
 
   webGLRenderer() {
@@ -42,62 +42,67 @@ export default class GameSnake {
       this.near,
       this.far
     );
+
+    this.scene = new THREE.Scene();
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    this.scene.background = new THREE.Color(0xcccccc);
+    this.spawnController = new SpawnController(this.scene);
+    this.light = new THREE.DirectionalLight(0xffffff, 1.5);
+    this.light2 = this.light.clone();
+    this.light3 = this.light.clone();
+
     //Ground
     this.groundGeometry = new THREE.PlaneGeometry(
       this.areaWidth,
       this.areaHeight
     );
-    this.groundMaterial = new THREE.MeshLambertMaterial({
+    this.groundMaterial = new THREE.MeshStandardMaterial({
       color: 0x42d4f5,
       side: THREE.DoubleSide,
     });
     this.ground = new THREE.Mesh(this.groundGeometry, this.groundMaterial);
-
-    //Wall
-    this.walls = new THREE.Object3D();
-
-    this.scene = new THREE.Scene();
-    this.raycaster = new THREE.Raycaster();
-    this.mouse = new THREE.Vector2();
-    this.light = new THREE.DirectionalLight(0xffffff, 3);
-    this.scene.background = new THREE.Color(0xcccccc);
   }
 
   initLevelAction() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    //this.camera.lookAt(this.ground.position);
-    //this.camera.position.set(0, 10, 10);
-    this.camera.position.set(12, 8, 12);
-    
-    this.initWalls();
-    this.level.add(this.ground,this.walls);
-    this.scene.add(this.level);
+
+    this.camera.lookAt(this.ground.position);
+    this.camera.position.set(0, 5, 5);
+
+    this.spawnController.wallsSpawn(
+      this.areaWidth,
+      this.areaHeight,
+      this.wallHeight
+    );
+    this.spawnController.snakeSpawn(this.snakePartWidth, this.snakeWidth);
+
     this.ground.rotateX(Math.PI / 2);
-    this.light.position.set(12, 8, 12);
-    this.scene.add(this.light);
 
+    //lights
+    this.lightsSet();
+    this.scene.add(this.ground, this.light, this.light2, this.light3);
     this.renderer.render(this.scene, this.camera);
-
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-  }
-
-  initWalls() {
-    this.wallA = this.wallHor.drawWall();
-    this.wallB = this.wallA.clone();
-    this.wallC = this.wallVert.drawWall();
-    this.wallD = this.wallC.clone();
-    this.wallA.position.set(0, 0, -this.areaHeight / 2);
-    this.wallB.position.set(0, 0, this.areaHeight / 2);
-    this.wallC.rotateY(-Math.PI / 2);
-    this.wallD.rotateY(Math.PI / 2);
-    this.wallC.position.set(this.areaWidth / 2, 0, 0);
-    this.wallD.position.set(-this.areaWidth / 2, 0, 0);
-    this.walls.add(this.wallA, this.wallB, this.wallC, this.wallD);
   }
 
   playingAction() {
     window.addEventListener("resize", this.onWindowResize);
     this.renderScene();
+  }
+
+  lightsSet() {
+    this.light.position.set(0, this.areaHeight / 2, -this.areaWidth / 2);
+    this.light2.position.set(
+      this.areaWidth / 4,
+      this.areaHeight / 2,
+      this.areaWidth / 2
+    );
+    this.light3.position.set(
+      -this.areaWidth / 4,
+      this.areaHeight / 2,
+      this.areaWidth / 2
+    );
   }
 
   onWindowResize() {
@@ -110,6 +115,7 @@ export default class GameSnake {
   renderScene() {
     window.requestAnimationFrame(this.renderScene.bind(this));
     this.controls.update();
+    //console.log(this.controls.getAzimuthalAngle());
     this.renderer.render(this.scene, this.camera);
   }
 }
