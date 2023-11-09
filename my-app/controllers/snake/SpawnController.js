@@ -4,6 +4,7 @@ import Snake from "../../components/essence/Snake";
 export default class SpawnController {
   constructor(container) {
     this._container = container;
+    this.snake = [];
   }
 
   wallsSpawn(areaWidth, areaHeight, wallHeight) {
@@ -29,11 +30,13 @@ export default class SpawnController {
     _container?.add(this.wallA, this.wallB, this.wallC, this.wallD);
   }
 
-  snakeSpawn(snakePartWidth, snakeWidth) {
+  snakeSpawn(snakePartWidth, snakeWidth, snakeName) {
     const { _container } = this;
     if (snakeWidth < 1) return;
-    this.snake = new Snake(snakePartWidth, snakeWidth);
+    this.snake = new Snake(snakePartWidth, snakeWidth, snakeName);
     this.snake = this.snake.drawSnake();
     _container?.add(...this.snake);
   }
+
+
 }

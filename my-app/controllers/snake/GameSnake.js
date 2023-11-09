@@ -2,6 +2,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import SpawnController from "./SpawnController";
+import { inputController } from "../InputController/InputController";
+import { KeyBoard } from "../InputController/plugins/KeyBoard";
+import { gsap } from "gsap/dist/gsap";
+import { useState } from "react";
 
 export default class GameSnake {
   static get instance() {
@@ -24,11 +28,18 @@ export default class GameSnake {
 
     this.onWindowResize = this.onWindowResize.bind(this);
     this.isIntersected;
+    this._inputController = inputController;
+    this.snakeMesh = [];
 
     //Options
     this.wallHeight = 2;
     this.snakePartWidth = 0.5;
-    this.snakeWidth = 5;
+    this.snakeWidth = 2;
+    this.snakeName = "Snake";
+    //Rotation
+    this.moveDistance = 0.15;
+    this.rotateAngle = (5 * Math.PI) / 180;
+    this.step;
   }
 
   webGLRenderer() {
@@ -48,6 +59,7 @@ export default class GameSnake {
     this.mouse = new THREE.Vector2();
     this.scene.background = new THREE.Color(0xcccccc);
     this.spawnController = new SpawnController(this.scene);
+    this.keyBoard = new KeyBoard();
     this.light = new THREE.DirectionalLight(0xffffff, 1.5);
     this.light2 = this.light.clone();
     this.light3 = this.light.clone();
@@ -67,16 +79,31 @@ export default class GameSnake {
   initLevelAction() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    this.camera.lookAt(this.ground.position);
-    this.camera.position.set(0, 5, 5);
-
     this.spawnController.wallsSpawn(
       this.areaWidth,
       this.areaHeight,
       this.wallHeight
     );
-    this.spawnController.snakeSpawn(this.snakePartWidth, this.snakeWidth);
+    this.spawnController.snakeSpawn(
+      this.snakePartWidth,
+      this.snakeWidth,
+      this.snakeName
+    );
 
+    this._inputController.setTarget(this.scene.children[8]);
+    this._inputController.pluginsAdd(this.keyBoard);
+    this._inputController.attach(this.scene.children[8], false);
+    this.snakeMesh = this.scene.children.filter(
+      (val) => val.name === this.snakeName
+    );
+    this.step = {
+      x: this.snakeMesh[0].position.x,
+      z: this.snakeMesh[0].position.z,
+    };
+
+    //this.snakeMesh[0].add(this.camera);
+    //this.camera.position.set(0, 10, -10);
+    this.camera.position.set(0, 10, 10);
     this.ground.rotateX(Math.PI / 2);
 
     //lights
@@ -115,7 +142,24 @@ export default class GameSnake {
   renderScene() {
     window.requestAnimationFrame(this.renderScene.bind(this));
     this.controls.update();
-    //console.log(this.controls.getAzimuthalAngle());
+    this.snakeMove();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  snakeMove() {
+    for (let i = 0; i < this.snakeMesh.length; i++) {
+      if (this._inputController.isActionActive("up")) {
+        this.snakeMesh[i].translateY(-this.moveDistance);
+      }
+      if (this._inputController.isActionActive("down")) {
+        this.snakeMesh[i].translateY(this.moveDistance);
+      }
+      if (this._inputController.isActionActive("left")) {
+        this.snakeMesh[i].rotation.z -= this.rotateAngle;
+      }
+      if (this._inputController.isActionActive("right")) {
+        this.snakeMesh[i].rotation.z += this.rotateAngle;
+      }
+    }
   }
 }

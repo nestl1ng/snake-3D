@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export default class Snake {
-  constructor(snakePartWidth, snakeWidth) {
+  constructor(snakePartWidth, snakeWidth, snakeName) {
     this._snakePartWidth = snakePartWidth;
     this._snakeWidth = snakeWidth;
     this.geometry = new THREE.CapsuleGeometry(
@@ -12,10 +12,12 @@ export default class Snake {
     );
     this.material = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.snake = [];
+    this.name = snakeName;
   }
 
   drawSnake() {
     this.capsule = new THREE.Mesh(this.geometry, this.material);
+    this.capsule.name = this.name;
     this.capsule.position.y += this._snakePartWidth;
     this.capsule.rotateX(Math.PI / 2);
     this.snake.push(this.capsule);
