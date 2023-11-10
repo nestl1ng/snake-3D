@@ -5,7 +5,6 @@ import SpawnController from "./SpawnController";
 import { inputController } from "../InputController/InputController";
 import { KeyBoard } from "../InputController/plugins/KeyBoard";
 import { gsap } from "gsap/dist/gsap";
-import { useState } from "react";
 
 export default class GameSnake {
   static get instance() {
@@ -34,12 +33,14 @@ export default class GameSnake {
     //Options
     this.wallHeight = 2;
     this.snakePartWidth = 0.5;
-    this.snakeWidth = 2;
+    this.snakeWidth = 3;
     this.snakeName = "Snake";
+
     //Rotation
     this.moveDistance = 0.15;
     this.rotateAngle = (5 * Math.PI) / 180;
     this.step;
+    this.snakeVectors = [];
   }
 
   webGLRenderer() {
@@ -89,17 +90,16 @@ export default class GameSnake {
       this.snakeWidth,
       this.snakeName
     );
+    this.makeSnakeVectors(this.snakeWidth);
 
-    this._inputController.setTarget(this.scene.children[8]);
     this._inputController.pluginsAdd(this.keyBoard);
     this._inputController.attach(this.scene.children[8], false);
+
     this.snakeMesh = this.scene.children.filter(
       (val) => val.name === this.snakeName
     );
-    this.step = {
-      x: this.snakeMesh[0].position.x,
-      z: this.snakeMesh[0].position.z,
-    };
+
+    //this.snakeMesh[0].add(new THREE.AxesHelper(5));
 
     //this.snakeMesh[0].add(this.camera);
     //this.camera.position.set(0, 10, -10);
@@ -147,19 +147,26 @@ export default class GameSnake {
   }
 
   snakeMove() {
-    for (let i = 0; i < this.snakeMesh.length; i++) {
-      if (this._inputController.isActionActive("up")) {
-        this.snakeMesh[i].translateY(-this.moveDistance);
+    if (this._inputController.isActionActive("up")) {
+      for (let i = 0; i < this.snakeWidth; i++) {
+        this.snakeMesh[i].translateZ(this.moveDistance);
       }
-      if (this._inputController.isActionActive("down")) {
-        this.snakeMesh[i].translateY(this.moveDistance);
+      for (let i = 0; i < this.snakeWidth - 1; i++) {
+        this.snakeMesh[i].children[1].getWorldPosition(this.snakeVectors[i]);
+        this.snakeMesh[i + 1].lookAt(this.snakeVectors[i]);
       }
-      if (this._inputController.isActionActive("left")) {
-        this.snakeMesh[i].rotation.z -= this.rotateAngle;
-      }
-      if (this._inputController.isActionActive("right")) {
-        this.snakeMesh[i].rotation.z += this.rotateAngle;
-      }
+    }
+    if (this._inputController.isActionActive("left")) {
+      this.snakeMesh[0].rotation.y -= this.rotateAngle;
+    }
+    if (this._inputController.isActionActive("right")) {
+      this.snakeMesh[0].rotation.y += this.rotateAngle;
+    }
+  }
+
+  makeSnakeVectors(n) {
+    for (let i = 0; i < n; i++) {
+      this.snakeVectors.push(new THREE.Vector3(0, 0, 0));
     }
   }
 }

@@ -34,8 +34,9 @@ export default class SpawnController {
     const { _container } = this;
     if (snakeWidth < 1) return;
     this.snake = new Snake(snakePartWidth, snakeWidth, snakeName);
-    this.snake = this.snake.drawSnake();
-    _container?.add(...this.snake);
+    this.snakeHead = this.snake.drawHead();
+    this.snakeBody = this.snake.drawBody();
+    _container?.add(this.snakeHead,...this.snakeBody);
   }
 
 
