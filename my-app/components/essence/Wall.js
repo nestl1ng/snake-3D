@@ -1,11 +1,12 @@
 import * as THREE from "three";
 
 export default class Wall {
-  constructor(wallWidth, wallHeight) {
+  constructor(wallWidth, wallHeight,wallName) {
     this.wallWidth = wallWidth;
     this.wallHeight = wallHeight;
     this.wallShape = new THREE.Shape();
     this.color = 0x4d5bd6;
+    this.wallName = wallName;
   }
 
   drawWall() {
@@ -24,6 +25,7 @@ export default class Wall {
       this.wallGeometry,
       new THREE.MeshStandardMaterial({ color: this.color })
     );
+    this.wall.name = this.wallName;
     return this.wall;
   }
 }

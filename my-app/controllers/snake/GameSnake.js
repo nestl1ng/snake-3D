@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import SpawnController from "./SpawnController";
 import { inputController } from "../InputController/InputController";
+import CollisionController from "../snake/CollisionController";
 import { KeyBoard } from "../InputController/plugins/KeyBoard";
 import { gsap } from "gsap/dist/gsap";
 
@@ -21,8 +22,8 @@ export default class GameSnake {
     this.aspect = window.innerWidth / window.innerHeight;
     this.near = 0.1;
     this.far = 100;
-    this.areaWidth = 50;
-    this.areaHeight = 40;
+    this.areaWidth = 30;
+    this.areaHeight = 18;
     this.boxDepth = 1;
 
     this.onWindowResize = this.onWindowResize.bind(this);
@@ -31,10 +32,17 @@ export default class GameSnake {
     this.snakeMesh = [];
 
     //Options
-    this.wallHeight = 2;
-    this.snakePartWidth = 0.5;
     this.snakeWidth = 3;
+    this.snakePartWidth = 0.5;
+
+    this.wallHeight = 2;
+
+    this.foodWidth = 0.5;
+    this.foodHeight = 0.1;
+
     this.snakeName = "Snake";
+    this.wallName = "Wall";
+    this.foodName = "Food";
 
     //Rotation
     this.moveDistance = 0.15;
@@ -54,12 +62,15 @@ export default class GameSnake {
       this.near,
       this.far
     );
-
     this.scene = new THREE.Scene();
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.scene.background = new THREE.Color(0xcccccc);
     this.spawnController = new SpawnController(this.scene);
+    this.collisionController = new CollisionController(
+      this.scene,
+      this.foodWidth
+    );
     this.keyBoard = new KeyBoard();
     this.light = new THREE.DirectionalLight(0xffffff, 1.5);
     this.light2 = this.light.clone();
@@ -83,26 +94,47 @@ export default class GameSnake {
     this.spawnController.wallsSpawn(
       this.areaWidth,
       this.areaHeight,
-      this.wallHeight
+      this.wallHeight,
+      this.wallName
     );
     this.spawnController.snakeSpawn(
       this.snakePartWidth,
       this.snakeWidth,
       this.snakeName
     );
+    this.spawnController.foodSpawn(
+      this.foodWidth,
+      this.foodHeight,
+      this.foodName,
+      this.areaWidth,
+      this.areaHeight
+    );
+    this.snakeMeshUpdate();
     this.makeSnakeVectors(this.snakeWidth);
+
+    //this.snakeMesh[0].add(new THREE.AxesHelper(5));
+
+    this.collisionController.setSnake(
+      this.snakeName,
+      this.snakeWidth,
+      this.snakePartWidth,
+      this.snakeMesh
+    );
+    this.collisionController.setWall(
+      this.wallName,
+      this.areaWidth,
+      this.areaHeight
+    );
+    this.collisionController.setFood(this.foodWidth, this.foodName);
+
+    this.collisionController.wall = this.wallName;
 
     this._inputController.pluginsAdd(this.keyBoard);
     this._inputController.attach(this.scene.children[8], false);
 
-    this.snakeMesh = this.scene.children.filter(
-      (val) => val.name === this.snakeName
-    );
+    this.food = this.scene.children.filter((val) => val.name === this.foodName);
 
     //this.snakeMesh[0].add(new THREE.AxesHelper(5));
-
-    //this.snakeMesh[0].add(this.camera);
-    //this.camera.position.set(0, 10, -10);
     this.camera.position.set(0, 10, 10);
     this.ground.rotateX(Math.PI / 2);
 
@@ -148,20 +180,32 @@ export default class GameSnake {
 
   snakeMove() {
     if (this._inputController.isActionActive("up")) {
-      for (let i = 0; i < this.snakeWidth; i++) {
+      for (let i = 0; i < this.snakeMesh.length; i++) {
         this.snakeMesh[i].translateZ(this.moveDistance);
       }
-      for (let i = 0; i < this.snakeWidth - 1; i++) {
+      for (let i = 0; i < this.snakeMesh.length - 1; i++) {
         this.snakeMesh[i].children[1].getWorldPosition(this.snakeVectors[i]);
         this.snakeMesh[i + 1].lookAt(this.snakeVectors[i]);
+        console.log(this.snakeMesh[i].children[1]);
       }
     }
     if (this._inputController.isActionActive("left")) {
-      this.snakeMesh[0].rotation.y -= this.rotateAngle;
+      gsap.set(this.snakeMesh[0].rotation, { y: `-=${this.rotateAngle}` });
     }
     if (this._inputController.isActionActive("right")) {
-      this.snakeMesh[0].rotation.y += this.rotateAngle;
+      gsap.set(this.snakeMesh[0].rotation, { y: `+=${this.rotateAngle}` });
     }
+    this.collisionController.snakeAndWalls();
+    this.collisionController.snakeAndFood();
+    this.snakeMeshUpdate();
+    gsap.set(this.food[0].rotation, { y: `-=${this.rotateAngle}` });
+  }
+
+  snakeMeshUpdate() {
+    this.snakeMesh = this.scene.children.filter(
+      (val) => val.name === this.snakeName
+    );
+    this.makeSnakeVectors(this.snakeMesh.length);
   }
 
   makeSnakeVectors(n) {

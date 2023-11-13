@@ -1,5 +1,6 @@
 import Wall from "../../components/essence/Wall";
 import Snake from "../../components/essence/Snake";
+import Food from "../../components/essence/Food";
 
 export default class SpawnController {
   constructor(container) {
@@ -7,11 +8,11 @@ export default class SpawnController {
     this.snake = [];
   }
 
-  wallsSpawn(areaWidth, areaHeight, wallHeight) {
+  wallsSpawn(areaWidth, areaHeight, wallHeight, wallName) {
     const { _container } = this;
 
-    this.wallHor = new Wall(areaWidth, wallHeight);
-    this.wallVert = new Wall(areaHeight, wallHeight);
+    this.wallHor = new Wall(areaWidth, wallHeight, wallName);
+    this.wallVert = new Wall(areaHeight, wallHeight, wallName);
 
     this.wallA = this.wallHor.drawWall();
     this.wallB = this.wallA.clone();
@@ -36,8 +37,13 @@ export default class SpawnController {
     this.snake = new Snake(snakePartWidth, snakeWidth, snakeName);
     this.snakeHead = this.snake.drawHead();
     this.snakeBody = this.snake.drawBody();
-    _container?.add(this.snakeHead,...this.snakeBody);
+    _container?.add(this.snakeHead, ...this.snakeBody);
   }
 
-
+  foodSpawn(foodWidth, foodHeight, foodName, areaWidth,areaHeight) {
+    const { _container } = this;
+    this.food = new Food(foodWidth, foodHeight, foodName);
+    this.food = this.food.drawFood(areaWidth,areaHeight);
+    _container?.add(this.food);
+  }
 }

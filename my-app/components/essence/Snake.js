@@ -14,16 +14,16 @@ export default class Snake {
     this.snakeHead;
     this.snake = [];
     this.name = snakeName;
-   // this.geometry.translate(0,-0.5,0);
+    //this.geometry.translate(0, this._snakePartWidth * 1.5, 0);
     this.geometry.rotateX(Math.PI / 2);
   }
 
   drawHead() {
     this.capsule = new THREE.Mesh(this.geometry, this.material);
+    this.capsule.rotateX(Math.PI);
     this.makeDotsClutch(this.capsule, this._snakePartWidth);
     this.capsule.name = this.name;
     this.capsule.position.y += this._snakePartWidth;
-    this.capsule.rotateX(Math.PI);
     this.snakeHead = this.capsule;
     return this.snakeHead;
   }
@@ -44,10 +44,11 @@ export default class Snake {
     this.geometryDot = new THREE.CapsuleGeometry(0.05, 0.05, 5, 5);
     this.materialDot = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.dotUp = new THREE.Mesh(this.geometryDot, this.materialDot);
+    //this.dotUp.add( new THREE.AxesHelper( 5 ) );
     this.dotUp.name = "DotClutch";
     this.dotDown = this.dotUp.clone();
     obj.add(this.dotUp, this.dotDown);
-    this.dotDown.position.set(0, 0, -width*1.5);
-    this.dotUp.position.set(0, 0, width*1.5);
+    this.dotDown.position.set(0, 0, -width * 1.5);
+    this.dotUp.position.set(0, 0, width * 1.5);
   }
 }
