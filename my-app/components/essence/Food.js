@@ -8,6 +8,8 @@ export default class Food {
   }
 
   drawFood(areaWidth, areaHeight) {
+    this.areaHeight = areaHeight;
+    this.areaWidth = areaWidth;
     this.geometry = new THREE.TorusGeometry(
       this.foodWidth,
       this.foodHeight,
@@ -18,17 +20,7 @@ export default class Food {
     this.torus = new THREE.Mesh(this.geometry, this.material);
     this.torus.name = this.foodName;
     this.makeDots(this.torus);
-    this.torus.position.set(
-      this.getRandomNum(
-        -areaWidth / 2 + this.foodWidth * 3,
-        areaWidth / 2 - this.foodWidth * 3
-      ),
-      0.6,
-      this.getRandomNum(
-        -areaHeight / 2 + this.foodWidth * 3,
-        areaHeight / 2 - this.foodWidth * 3
-      )
-    );
+    this.torus.position.set(3, 0.6, -3);
     return this.torus;
   }
 
@@ -41,15 +33,5 @@ export default class Food {
     torus.add(this.dotUp, this.dotDown);
     this.dotDown.position.set(-(this.foodWidth + this.foodHeight) / 1.25, 0, 0);
     this.dotUp.position.set((this.foodWidth + this.foodHeight) / 1.25, 0, 0);
-  }
-
-  getRandomNum(min, max) {
-    let rand;
-    if (max) {
-      rand = Math.random() * (max - min) + min;
-    } else {
-      rand = Math.random() * min;
-    }
-    return +rand.toFixed(2);
   }
 }

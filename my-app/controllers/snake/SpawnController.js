@@ -3,9 +3,25 @@ import Snake from "../../components/essence/Snake";
 import Food from "../../components/essence/Food";
 
 export default class SpawnController {
-  constructor(container) {
+  constructor({ container, eventBus }) {
     this._container = container;
     this.snake = [];
+    this.onGetSnake = this.onGetSnake.bind(this);
+    this.onGetWalls = this.onGetWalls.bind(this);
+    this.onGetFood = this.onGetFood.bind(this);
+    eventBus.addEventListener("getSnake", this.onGetSnake);
+    eventBus.addEventListener("getWalls", this.onGetWalls);
+    eventBus.addEventListener("getFood", this.onGetFood);
+  }
+
+  onGetSnake(e) {
+    e.data = { snake: this.snake };
+  }
+  onGetWalls(e){
+    e.data = { walls: {'wallHor': this.wallHor, 'wallVert': this.wallVert} };
+  }
+  onGetFood(e){
+    e.data = { food: this.food };
   }
 
   wallsSpawn(areaWidth, areaHeight, wallHeight, wallName) {
@@ -40,10 +56,10 @@ export default class SpawnController {
     _container?.add(this.snakeHead, ...this.snakeBody);
   }
 
-  foodSpawn(foodWidth, foodHeight, foodName, areaWidth,areaHeight) {
+  foodSpawn(foodWidth, foodHeight, foodName, areaWidth, areaHeight) {
     const { _container } = this;
     this.food = new Food(foodWidth, foodHeight, foodName);
-    this.food = this.food.drawFood(areaWidth,areaHeight);
+    this.food = this.food.drawFood(areaWidth, areaHeight);
     _container?.add(this.food);
   }
 }
