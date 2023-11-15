@@ -1,27 +1,17 @@
 import Wall from "../../components/essence/Wall";
-import Snake from "../../components/essence/Snake";
+import Snake from "../../components/essence/snake/Snake";
 import Food from "../../components/essence/Food";
 
 export default class SpawnController {
   constructor({ container, eventBus }) {
     this._container = container;
-    this.snake = [];
+    this._eventBus = eventBus;
     this.onGetSnake = this.onGetSnake.bind(this);
     this.onGetWalls = this.onGetWalls.bind(this);
     this.onGetFood = this.onGetFood.bind(this);
-    eventBus.addEventListener("getSnake", this.onGetSnake);
-    eventBus.addEventListener("getWalls", this.onGetWalls);
-    eventBus.addEventListener("getFood", this.onGetFood);
-  }
-
-  onGetSnake(e) {
-    e.data = { snake: this.snake };
-  }
-  onGetWalls(e){
-    e.data = { walls: {'wallHor': this.wallHor, 'wallVert': this.wallVert} };
-  }
-  onGetFood(e){
-    e.data = { food: this.food };
+    this._eventBus.addEventListener("getSnake", this.onGetSnake);
+    this._eventBus.addEventListener("getWalls", this.onGetWalls);
+    this._eventBus.addEventListener("getFood", this.onGetFood);
   }
 
   wallsSpawn(areaWidth, areaHeight, wallHeight, wallName) {
@@ -50,10 +40,14 @@ export default class SpawnController {
   snakeSpawn(snakePartWidth, snakeWidth, snakeName) {
     const { _container } = this;
     if (snakeWidth < 1) return;
-    this.snake = new Snake(snakePartWidth, snakeWidth, snakeName);
-    this.snakeHead = this.snake.drawHead();
-    this.snakeBody = this.snake.drawBody();
-    _container?.add(this.snakeHead, ...this.snakeBody);
+    this.snake = new Snake(
+      snakePartWidth,
+      snakeWidth,
+      snakeName,
+      this._eventBus
+    );
+    this.wholeSnake = this.snake.drawSnake();
+    _container?.add(...this.wholeSnake);
   }
 
   foodSpawn(foodWidth, foodHeight, foodName, areaWidth, areaHeight) {
@@ -61,5 +55,15 @@ export default class SpawnController {
     this.food = new Food(foodWidth, foodHeight, foodName);
     this.food = this.food.drawFood(areaWidth, areaHeight);
     _container?.add(this.food);
+  }
+
+  onGetSnake(e) {
+    e.data = { snake: this.snake };
+  }
+  onGetWalls(e) {
+    e.data = { walls: { wallHor: this.wallHor, wallVert: this.wallVert } };
+  }
+  onGetFood(e) {
+    e.data = { food: this.food };
   }
 }
