@@ -1,27 +1,30 @@
-import * as THREE from "three";
+import Snake from "./Snake";
 
-export default class SnakeBody {
-  constructor(head, _snakeWidth, _snakePartWidth) {
-    this.head = head;
-    this._snakeWidth = _snakeWidth;
-    this._snakePartWidth = _snakePartWidth;
-    this.mesh = [];
+export default class SnakeBody extends Snake {
+  constructor(snakePartWidth, name, eventBus, snakeWidth, count) {
+    super(snakePartWidth, name, eventBus);
+    this._snakePartWidth = snakePartWidth;
+    this._name = name;
+    this._eventBus = eventBus;
+
+    this.dots;
+    this._snakeWidth = snakeWidth;
+    this._count = count;
+    this.mesh;
   }
 
   draw() {
-    this.addBody(this.head);
-    if (this._snakeWidth > 2) {
-      for (let i = 1; i < this._snakeWidth - 1; i++) {
-        this.addBody(this.mesh[i - 1]);
-      }
-    }
+    this.mesh = super.drawSnake();
+    this.mesh.name += "Body";
+    this.mesh.position.y += this._snakePartWidth;
+    this.mesh.position.z = this._snakePartWidth * 3 * this._count;
+    //this.mesh.position.set(-2.25,0.5,-2.625);
+    this.mesh?.add(...super.makeDots());
     return this.mesh;
   }
 
-  addBody(prop) {
-    this.capsule = this.head.clone();
-    this.capsule.name = "Body";
-    this.capsule.position.z = this._snakePartWidth * 3 + prop.position.z;
-    this.mesh.push(this.capsule);
+  getWorldPosDots() {
+    this.worldPosDots = super.getWorldPosDots();
+    return this.worldPosDots;
   }
 }

@@ -13,11 +13,10 @@ export default class CollisionController {
     this.eventSnake = { type: "getSnake" };
     this.eventWalls = { type: "getWalls" };
     this.eventFood = { type: "getFood" };
-    this.eventPoints = { type: "getPoints" };
   }
 
   allCollision() {
-    //this.snakeAndWalls();
+    this.snakeAndWalls();
     //this.snakeAndFood();
     //this.snakeSelf();
   }
@@ -26,30 +25,20 @@ export default class CollisionController {
     this.snake = this.getSnake();
     this.wall = this.getWalls();
     this.food = this.getFood();
-    this.points = this.getPoints();
     console.log(this.snake);
   }
 
-  // setSnake() {
-  //   this.snakeSpheres.push(
-  //     new THREE.Sphere(snake.snakeBody[0].position, snake._snakePartWidth / 1.5)
-  //   );
-  // }
-
   setFood() {
-    const { food } = this;
-    if (food === undefined) return;
-    this.foodWidth = food.geometry.parameters.radius * 3;
-    this.foodName = food.name;
     this.foodSphere = new THREE.Sphere(food.position, this.foodWidth * 1.5);
   }
 
   snakeAndWalls() {
     const { snake, wall } = this;
+    this.headVector = snake.snakeHead.getWorldPosDots();
     if (snake.snakeBody === null || this.walls === null) return;
     this.areaWidth = wall.wallHor.wallWidth / 2;
     this.areaHeight = wall.wallVert.wallWidth / 2;
-    this.snakeDots[0].getWorldPosition(this.headVector);
+    this.headVector = this.headVector[0];
     if (
       this.areaWidth <= this.headVector.x ||
       this.headVector.x <= -this.areaWidth ||
@@ -89,30 +78,15 @@ export default class CollisionController {
     snake.snakeHead.mesh.position.set(0, 0.5, 0);
     snake.snakeHead.mesh.rotation.y = 0;
     if (snake.snakeBody.length > 0) {
-      snake.snakeBody[0].rotation.y = 0;
-      snake.snakeBody[0].position.set(
-        0,
-        0.5,
-        snake._snakePartWidth * 3 + snake.snakeHead.mesh.position.z
-      );
-      if (snake.snakeBody.length > 1) {
-        for (let i = 1; i < snake._snakeWidth - 1; i++) {
-          snake.snakeBody[i].rotation.y = 0;
-          snake.snakeBody[i].position.set(
-            0,
-            0.5,
-            snake._snakePartWidth * 3 + snake.snakeBody[i - 1].position.z
-          );
-          snake.snakeBody[i].rotation.y = 0;
-        }
+      for (let i = 0; i < snake.snakeBody.length; i++) {
+        snake.snakeBody[i].mesh.rotation.y = 0;
+        snake.snakeBody[i].mesh.position.set(
+          0,
+          0.5,
+          snake.snakeHead._snakePartWidth * 3 * (i + 1)
+        );
       }
     }
-    if (snake._snakeWidth < 3) return;
-    for (let i = snake._snakeWidth; i < snake.snakeBody.length; i++) {
-      this._container?.remove(snake.snakeBody[i]);
-    }
-    // this.popMass(snake._snakeWidth, snake.snakeBody);
-    // this.popMass(snake._snakeWidth, this.snakeSpheres);
   }
 
   randomFood() {
@@ -201,13 +175,6 @@ export default class CollisionController {
       data: { food },
     } = this.eventFood;
     return food;
-  }
-  getPoints() {
-    this.eventBus.dispatchEvent(this.eventPoints);
-    const {
-      data: { points },
-    } = this.eventPoints;
-    return points;
   }
   //
 }

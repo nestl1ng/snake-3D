@@ -1,6 +1,7 @@
 import Wall from "../../components/essence/Wall";
-import Snake from "../../components/essence/snake/Snake";
+import SnakeHead from "../../components/essence/snake/SnakeHead";
 import Food from "../../components/essence/Food";
+import SnakeBody from "../../components/essence/snake/SnakeBody";
 
 export default class SpawnController {
   constructor({ container, eventBus }) {
@@ -40,14 +41,13 @@ export default class SpawnController {
   snakeSpawn(snakePartWidth, snakeWidth, snakeName) {
     const { _container } = this;
     if (snakeWidth < 1) return;
-    this.snake = new Snake(
-      snakePartWidth,
-      snakeWidth,
-      snakeName,
-      this._eventBus
-    );
-    this.wholeSnake = this.snake.drawSnake();
-    _container?.add(...this.wholeSnake);
+
+    this.snakeMeshs = [];
+    this.snake = {};
+    this.snakeBody = [];
+    this.makeHead(snakePartWidth, snakeWidth, snakeName);
+    this.makeBody(snakePartWidth, snakeWidth, snakeName);
+    _container?.add(...this.snakeMeshs);
   }
 
   foodSpawn(foodWidth, foodHeight, foodName, areaWidth, areaHeight) {
@@ -55,6 +55,34 @@ export default class SpawnController {
     this.food = new Food(foodWidth, foodHeight, foodName);
     this.food = this.food.drawFood(areaWidth, areaHeight);
     _container?.add(this.food);
+  }
+
+  makeHead(snakePartWidth, snakeWidth, snakeName) {
+    this.snakeHead = new SnakeHead(
+      snakePartWidth,
+      snakeName,
+      this._eventBus,
+      snakeWidth
+    );
+    this.snake["snakeHead"] = this.snakeHead;
+    this.snakeHead = this.snakeHead.draw();
+    this.snakeMeshs.push(this.snakeHead);
+  }
+
+  makeBody(snakePartWidth, snakeWidth, snakeName) {
+    for (let i = 1; i < snakeWidth; i++) {
+      this.snakePart = new SnakeBody(
+        snakePartWidth,
+        snakeName,
+        this._eventBus,
+        snakeWidth,
+        i
+      );
+      this.snakeBody.push(this.snakePart);
+      this.snakePart = this.snakePart.draw();
+      this.snakeMeshs.push(this.snakePart);
+    }
+    this.snake["snakeBody"] = this.snakeBody;
   }
 
   onGetSnake(e) {

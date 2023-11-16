@@ -45,6 +45,7 @@ export default class GameSnake {
     //Rotation
     this.moveDistance = 0.15;
     this.rotateAngle = (5 * Math.PI) / 180;
+    this.rotateAngle2 = (45 * Math.PI) / 180;
     this.step;
     this.snakeVectors = [];
   }
@@ -125,12 +126,13 @@ export default class GameSnake {
     collisionController.getEssence();
     this.snake = collisionController.getSnake();
     this.food = collisionController.getFood();
-    this.snakeBody = this.snake.snakeBody;
     this.snakeHead = this.snake.snakeHead.mesh;
+    this.snakeBody = this.snake.snakeBody.map((val) => val.mesh);
+
+    this.snakeHead.rotation.y = this.rotateAngle2;
 
     inputController.pluginsAdd(this.keyBoard);
     inputController.attach(this.snakeHead, false);
-
 
     this.snakeHead.add(new THREE.AxesHelper(5));
   }
@@ -170,9 +172,27 @@ export default class GameSnake {
   }
 
   snakeMove() {
-    const { snake, food, snakeHead, inputController } = this;
+    const { snake, snakeHead, snakeBody, food, inputController } = this;
+    snakeBody[0].lookAt(snake.snakeHead.getWorldPosDots()[1]);
+    snakeBody[1].lookAt(snake.snakeBody[0].getWorldPosDots()[1]);
+    const newVect1 = new THREE.Vector3(
+      snake.snakeHead.getWorldPosDots()[0].x -
+        snake.snakeHead.getWorldPosDots()[1].x,
+      0.5,
+      snake.snakeHead.getWorldPosDots()[0].z -
+        snake.snakeHead.getWorldPosDots()[1].z
+    );
+    const newVect2 = new THREE.Vector3(
+      snake.snakeBody[0].getWorldPosDots()[0].x -
+        snake.snakeBody[0].getWorldPosDots()[1].x,
+      0.5,
+      snake.snakeBody[0].getWorldPosDots()[0].z -
+        snake.snakeBody[0].getWorldPosDots()[1].z
+    );
+    console.log(newVect1);
+
     if (inputController.isActionActive("up")) {
-      snake.snakeHead.mesh.translateZ(this.moveDistance);
+      snakeHead.translateZ(this.moveDistance);
     }
     if (inputController.isActionActive("left")) {
       gsap.set(snakeHead.rotation, { y: `-=${this.rotateAngle}` });
@@ -185,7 +205,7 @@ export default class GameSnake {
   }
 
   makeSnakeVectors(n) {
-    while (this.snakeVectors.length < n*3) {
+    while (this.snakeVectors.length < n * 3) {
       this.snakeVectors.push(new THREE.Vector3(0, 0, 0));
     }
   }
