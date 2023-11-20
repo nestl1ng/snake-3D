@@ -22,8 +22,8 @@ export default class GameSnake {
     this.aspect = window.innerWidth / window.innerHeight;
     this.near = 0.1;
     this.far = 100;
-    this.areaWidth = 30;
-    this.areaHeight = 18;
+    this.areaWidth = 40;
+    this.areaHeight = 30;
     this.boxDepth = 1;
 
     this.onWindowResize = this.onWindowResize.bind(this);
@@ -33,7 +33,7 @@ export default class GameSnake {
     this.snakeVect;
 
     //Options
-    this.snakeWidth = 3;
+    this.snakeWidth = 4;
     this.snakePartWidth = 0.5;
     this.wallHeight = 2;
     this.foodWidth = 0.5;
@@ -43,11 +43,10 @@ export default class GameSnake {
     this.foodName = "Food";
 
     //Rotation
-    this.moveDistance = 0.15;
-    this.rotateAngle = (5 * Math.PI) / 180;
+    this.moveDistance = 0.12;
+    this.rotateAngle = (3 * Math.PI) / 180;
     this.rotateAngle2 = (45 * Math.PI) / 180;
     this.step;
-    this.snakeVectors = [];
   }
 
   webGLRenderer() {
@@ -87,9 +86,11 @@ export default class GameSnake {
     this.collisionController = new CollisionController({
       eventBus: this.eventBus,
       container: this.scene,
-      foodWidth: this.foodWidth,
     });
     this.keyBoard = new KeyBoard();
+
+    this.onGetSpawn = this.onGetSpawn.bind(this);
+    this.eventBus.addEventListener("getSpawn", this.onGetSpawn);
   }
 
   initLevelAction() {
@@ -113,6 +114,7 @@ export default class GameSnake {
       this.snakeWidth,
       this.snakeName
     );
+
     spawnController.foodSpawn(
       this.foodWidth,
       this.foodHeight,
@@ -121,20 +123,21 @@ export default class GameSnake {
       this.areaHeight
     );
 
-    this.makeSnakeVectors(this.snakeWidth);
-
     collisionController.getEssence();
     this.snake = collisionController.getSnake();
     this.food = collisionController.getFood();
-    this.snakeHead = this.snake.snakeHead.mesh;
-    this.snakeBody = this.snake.snakeBody.map((val) => val.mesh);
+    this.spawn = collisionController.getSpawnController();
 
-    this.snakeHead.rotation.y = this.rotateAngle2;
+    this.snakeHead = this.snake.snakeHead.mesh;
+    this.snakeBox = this.snake.snakeHead.box;
+    this.snakeBox2 = this.snake.snakeBody[2].box;
+    this.helper = new THREE.Box3Helper(this.snakeBox, 0xffff00);
+    this.helper2 = new THREE.Box3Helper(this.snakeBox2, 0xffff00);
+    this.scene.add(this.helper, this.helper2);
+    this.snakeHead.add(new THREE.AxesHelper(5));
 
     inputController.pluginsAdd(this.keyBoard);
     inputController.attach(this.snakeHead, false);
-
-    this.snakeHead.add(new THREE.AxesHelper(5));
   }
 
   playingAction() {
@@ -166,47 +169,116 @@ export default class GameSnake {
   renderScene() {
     window.requestAnimationFrame(this.renderScene.bind(this));
     this.controls.update();
+    this.collisionsLogic();
     this.snakeMove();
-    this.collisionController.allCollision();
     this.renderer.render(this.scene, this.camera);
   }
 
   snakeMove() {
-    const { snake, snakeHead, snakeBody, food, inputController } = this;
-    snakeBody[0].lookAt(snake.snakeHead.getWorldPosDots()[1]);
-    snakeBody[1].lookAt(snake.snakeBody[0].getWorldPosDots()[1]);
-    const newVect1 = new THREE.Vector3(
-      snake.snakeHead.getWorldPosDots()[0].x -
-        snake.snakeHead.getWorldPosDots()[1].x,
-      0.5,
-      snake.snakeHead.getWorldPosDots()[0].z -
-        snake.snakeHead.getWorldPosDots()[1].z
-    );
-    const newVect2 = new THREE.Vector3(
-      snake.snakeBody[0].getWorldPosDots()[0].x -
-        snake.snakeBody[0].getWorldPosDots()[1].x,
-      0.5,
-      snake.snakeBody[0].getWorldPosDots()[0].z -
-        snake.snakeBody[0].getWorldPosDots()[1].z
-    );
-    console.log(newVect1);
+    const { snake, food, inputController } = this;
+    snake.snakeHead.makeBox3();
+    snake.snakeBody[2].makeBox3();
+    //snake.snakeHead.mesh.translateZ(this.moveDistance);
+    snake.snakeBody[0].mesh.lookAt(snake.snakeHead.getWorldPosDots()[1]);
+    const pos = this.moveToMesh(snake.snakeBody[0], snake.snakeHead);
+    snake.snakeBody[0].mesh.position.set(pos.x, pos.y, pos.z);
+    //bodyMove
+    for (let i = 0; i < snake.snakeBody.length - 1; i++) {
+      snake.snakeBody[i + 1].mesh.lookAt(
+        snake.snakeBody[i].getWorldPosDots()[1]
+      );
+      const bodyPos = this.moveToMesh(
+        snake.snakeBody[i + 1],
+        snake.snakeBody[i]
+      );
+      snake.snakeBody[i + 1].mesh.position.set(bodyPos.x, bodyPos.y, bodyPos.z);
+    }
 
     if (inputController.isActionActive("up")) {
-      snakeHead.translateZ(this.moveDistance);
+      snake.snakeHead.mesh.translateZ(this.moveDistance);
     }
     if (inputController.isActionActive("left")) {
-      gsap.set(snakeHead.rotation, { y: `-=${this.rotateAngle}` });
+      gsap.set(snake.snakeHead.mesh.rotation, { y: `-=${this.rotateAngle}` });
     }
     if (inputController.isActionActive("right")) {
-      gsap.set(snakeHead.rotation, { y: `+=${this.rotateAngle}` });
+      gsap.set(snake.snakeHead.mesh.rotation, { y: `+=${this.rotateAngle}` });
     }
-    if (food === undefined) return;
-    gsap.set(food.rotation, { y: `-=${this.rotateAngle}` });
+    if (food.mesh === undefined) return;
+    gsap.set(food.mesh.rotation, { y: `-=${this.rotateAngle}` });
   }
 
-  makeSnakeVectors(n) {
-    while (this.snakeVectors.length < n * 3) {
-      this.snakeVectors.push(new THREE.Vector3(0, 0, 0));
+  moveToMesh(start, end) {
+    let newVect = new THREE.Vector3();
+    if (start.isVector3) {
+      newVect = new THREE.Vector3(0, 0, this.snakePartWidth * 3);
+    } else {
+      newVect = new THREE.Vector3(
+        start.getWorldPosDots()[1].x - start.getWorldPosDots()[0].x,
+        0,
+        start.getWorldPosDots()[1].z - start.getWorldPosDots()[0].z
+      );
     }
+    const pos = new THREE.Vector3(
+      newVect.x + end.getWorldPosDots()[1].x,
+      this.snakePartWidth,
+      newVect.z + end.getWorldPosDots()[1].z
+    );
+    return pos;
+  }
+
+  collisionsLogic() {
+    const { collisionController, snake, spawn } = this;
+    if (collisionController.snakeAndWalls()) {
+      this.restartGame();
+    }
+    if (collisionController.snakeAndFood()) {
+      this.randomFoodPos();
+      const pos = this.moveToMesh(
+        new THREE.Vector3(),
+        snake.snakeBody[snake.snakeBody.length - 1]
+      );
+      spawn.addBody(pos);
+    }
+    if(collisionController.snakeSelf()){
+      console.log("yes");
+    }
+  }
+
+  restartGame() {
+    const { snake, spawn } = this;
+    snake.snakeHead.mesh.position.set(0, this.snakePartWidth, 0);
+    snake.snakeHead.mesh.rotation.y = 0;
+    if (snake.snakeBody.length > 0) {
+      for (let i = 0; i < this.snakeWidth - 1; i++) {
+        snake.snakeBody[i].mesh.rotation.y = 0;
+        snake.snakeBody[i].mesh.position.set(
+          0,
+          this.snakePartWidth,
+          snake.snakeHead._snakePartWidth * 3 * (i + 1)
+        );
+      }
+      for (let i = snake.snakeBody.length - 1; i > this.snakeWidth - 2; i--) {
+        spawn.deleteBody(snake.snakeBody[i].mesh);
+      }
+    }
+  }
+
+  randomFoodPos() {
+    const { food } = this;
+    food.mesh.position.set(
+      food.getRandomNum(
+        -this.areaWidth / 2 + food._foodWidth * 3,
+        this.areaWidth / 2 - food._foodWidth * 3
+      ),
+      this.snakePartWidth + food._foodHeight,
+      food.getRandomNum(
+        -this.areaHeight / 2 + food._foodWidth * 3,
+        this.areaHeight / 2 - food._foodWidth * 3
+      )
+    );
+  }
+
+  onGetSpawn(e) {
+    e.data = { spawn: this.spawnController };
   }
 }

@@ -40,6 +40,10 @@ export default class SpawnController {
 
   snakeSpawn(snakePartWidth, snakeWidth, snakeName) {
     const { _container } = this;
+    this.snakePartWidth = snakePartWidth;
+    this.snakeWidth = snakeWidth;
+    this.snakeName = snakeName;
+
     if (snakeWidth < 1) return;
 
     this.snakeMeshs = [];
@@ -53,8 +57,8 @@ export default class SpawnController {
   foodSpawn(foodWidth, foodHeight, foodName, areaWidth, areaHeight) {
     const { _container } = this;
     this.food = new Food(foodWidth, foodHeight, foodName);
-    this.food = this.food.drawFood(areaWidth, areaHeight);
-    _container?.add(this.food);
+    this.foodMesh = this.food.drawFood(areaWidth, areaHeight);
+    _container?.add(this.foodMesh);
   }
 
   makeHead(snakePartWidth, snakeWidth, snakeName) {
@@ -82,6 +86,30 @@ export default class SpawnController {
       this.snakePart = this.snakePart.draw();
       this.snakeMeshs.push(this.snakePart);
     }
+    this.snake["snakeBody"] = this.snakeBody;
+  }
+
+  addBody(pos) {
+    const { _container } = this;
+    this.snakePart = new SnakeBody(
+      this.snakePartWidth,
+      this.snakeName,
+      this._eventBus,
+      this.snakeWidth,
+      pos
+    );
+    this.snakeBody.push(this.snakePart);
+    this.snakePart = this.snakePart.draw();
+    this.snakeMeshs.push(this.snakePart);
+    this.snake["snakeBody"] = this.snakeBody;
+    _container?.add(this.snakePart);
+  }
+
+  deleteBody(mesh){
+    const { _container } = this;
+    _container?.remove(mesh);
+    this.snakeBody.pop();
+    this.snakeMeshs.pop();
     this.snake["snakeBody"] = this.snakeBody;
   }
 

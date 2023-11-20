@@ -7,7 +7,6 @@ export default class SnakeBody extends Snake {
     this._name = name;
     this._eventBus = eventBus;
 
-    this.dots;
     this._snakeWidth = snakeWidth;
     this._count = count;
     this.mesh;
@@ -15,10 +14,15 @@ export default class SnakeBody extends Snake {
 
   draw() {
     this.mesh = super.drawSnake();
+    this.mesh.geometry.computeBoundingBox();
     this.mesh.name += "Body";
-    this.mesh.position.y += this._snakePartWidth;
-    this.mesh.position.z = this._snakePartWidth * 3 * this._count;
-    //this.mesh.position.set(-2.25,0.5,-2.625);
+    if (this._count.isVector3) {
+      this.mesh.position.set(this._count.x,this._count.y,this._count.z);
+    } else {
+      this.mesh.position.y += this._snakePartWidth;
+      this.mesh.position.z = this._snakePartWidth * 3 * this._count;
+    }
+    super.makeBox3();
     this.mesh?.add(...super.makeDots());
     return this.mesh;
   }

@@ -1,5 +1,4 @@
 import * as THREE from "three";
-// import SnakeHead from "./SnakeHead";
 
 export default class Snake {
   constructor(snakePartWidth, snakeName, eventBus, snakeWidth) {
@@ -10,6 +9,7 @@ export default class Snake {
     this.name = snakeName;
     this.vectUp = new THREE.Vector3();
     this.vectDown = new THREE.Vector3();
+    this.box = new THREE.Box3();
   }
 
   drawSnake() {
@@ -24,12 +24,21 @@ export default class Snake {
     this.material = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.rotateX(Math.PI);
+    this.mesh.geometry.computeBoundingBox();
     this.mesh.name = this.name;
+    this.makeBox3();
     return this.mesh;
   }
 
+  makeBox3() {
+    this.box
+      .copy(this.mesh.geometry.boundingBox)
+      .applyMatrix4(this.mesh.matrixWorld);
+    // this.box.setFromObject(this.mesh, true);
+  }
+
   makeDots() {
-    this.geometryDot = new THREE.CapsuleGeometry(0.05, 0.05, 5, 5);
+    this.geometryDot = new THREE.CapsuleGeometry(0.1, 0.1, 1, 1);
     this.materialDot = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.dotUp = new THREE.Mesh(this.geometryDot, this.materialDot);
     this.dotUp.name = "DotUp";
