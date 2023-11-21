@@ -21,7 +21,6 @@ export default class Food {
     this.material = new THREE.MeshStandardMaterial({ color: 0xebde34 });
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.name = this.foodName;
-    this.sphere = new THREE.Sphere(this.mesh.position, this._foodWidth * 1.5);
     this.makeDots(this.mesh);
     this.mesh.position.set(
       this.getRandomNum(
@@ -38,7 +37,7 @@ export default class Food {
   }
 
   makeDots(mesh) {
-    this.geometryDot = new THREE.CapsuleGeometry(0.1, 0.1, 1, 1);
+    this.geometryDot = new THREE.CapsuleGeometry(0.1, 0.1, 10, 10);
     this.materialDot = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.dotUp = new THREE.Mesh(this.geometryDot, this.materialDot);
     this.dotUp.name = "DotCollision";

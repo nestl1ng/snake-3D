@@ -7,9 +7,6 @@ export default class Snake {
     this._snakePartWidth = snakePartWidth;
     this._snakeWidth = snakeWidth;
     this.name = snakeName;
-    this.vectUp = new THREE.Vector3();
-    this.vectDown = new THREE.Vector3();
-    this.box = new THREE.Box3();
   }
 
   drawSnake() {
@@ -26,19 +23,11 @@ export default class Snake {
     this.mesh.rotateX(Math.PI);
     this.mesh.geometry.computeBoundingBox();
     this.mesh.name = this.name;
-    this.makeBox3();
     return this.mesh;
   }
 
-  makeBox3() {
-    this.box
-      .copy(this.mesh.geometry.boundingBox)
-      .applyMatrix4(this.mesh.matrixWorld);
-    // this.box.setFromObject(this.mesh, true);
-  }
-
   makeDots() {
-    this.geometryDot = new THREE.CapsuleGeometry(0.1, 0.1, 1, 1);
+    this.geometryDot = new THREE.CapsuleGeometry(0.04, 0.04, 10, 10);
     this.materialDot = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.dotUp = new THREE.Mesh(this.geometryDot, this.materialDot);
     this.dotUp.name = "DotUp";
@@ -50,9 +39,61 @@ export default class Snake {
     return this.snakeDots;
   }
 
+  makeSquareDots() {
+    this.snakeSquareDots = [];
+    for (let i = 0; i < 4; i++) {
+      this.squareDot = this.dotUp.clone();
+      this.squareDot.name = "squareDot";
+      this.snakeSquareDots.push(this.squareDot);
+    }
+    this.snakeSquareDots[0].position.set(
+      -this._snakePartWidth,
+      0,
+      this._snakePartWidth * 3
+    );
+    this.snakeSquareDots[1].position.set(
+      this._snakePartWidth,
+      0,
+      this._snakePartWidth * 3
+    );
+    this.snakeSquareDots[2].position.set(
+      -this._snakePartWidth,
+      0,
+      this._snakePartWidth
+    );
+    this.snakeSquareDots[3].position.set(
+      this._snakePartWidth,
+      0,
+      this._snakePartWidth
+    );
+    return this.snakeSquareDots;
+  }
+
+  getWorldPosSquareDots() {
+    this.squarePoint = new THREE.Vector3();
+    this.squarePoints = [];
+    for (let i = 0; i < 4; i++) {
+      this.snakeSquareDots[i].getWorldPosition(this.squarePoint);
+      this.squarePoints.push(this.squarePoint);
+      this.squarePoint = new THREE.Vector3();
+    }
+    return this.squarePoints;
+  }
+
   getWorldPosDots() {
-    this.snakeDots[0].getWorldPosition(this.vectUp);
-    this.snakeDots[1].getWorldPosition(this.vectDown);
-    return [this.vectUp, this.vectDown];
+    this.vect = new THREE.Vector3();
+    this.vectors = [];
+    for (let i = 0; i < 2; i++) {
+      this.snakeDots[i].getWorldPosition(this.vect);
+      this.vectors.push(this.vect);
+      this.vect = new THREE.Vector3();
+    }
+    return this.vectors;
+  }
+
+  areaSquare(vectors) {
+    const firstDist = vectors[0].distanceTo(vectors[1]);
+    const SecondDist = vectors[1].distanceTo(vectors[2]);
+    return firstDist * SecondDist;
   }
 }

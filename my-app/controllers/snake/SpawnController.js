@@ -20,15 +20,19 @@ export default class SpawnController {
 
     this.wallHor = new Wall(areaWidth, wallHeight, wallName);
     this.wallVert = new Wall(areaHeight, wallHeight, wallName);
+    this.wallHor2 = new Wall(areaWidth, wallHeight, wallName);
+    this.wallVert2 = new Wall(areaHeight, wallHeight, wallName);
 
     this.wallA = this.wallHor.drawWall();
-    this.wallB = this.wallA.clone();
+    this.wallB = this.wallHor2.drawWall();
 
     this.wallC = this.wallVert.drawWall();
-    this.wallD = this.wallC.clone();
+    this.wallD = this.wallVert2.drawWall();
 
     this.wallA.position.set(0, 0, -areaHeight / 2);
     this.wallB.position.set(0, 0, areaHeight / 2);
+
+    this.wallB.rotateY(-Math.PI);
 
     this.wallC.rotateY(-Math.PI / 2);
     this.wallD.rotateY(Math.PI / 2);
@@ -105,7 +109,7 @@ export default class SpawnController {
     _container?.add(this.snakePart);
   }
 
-  deleteBody(mesh){
+  deleteBody(mesh) {
     const { _container } = this;
     _container?.remove(mesh);
     this.snakeBody.pop();
@@ -117,7 +121,9 @@ export default class SpawnController {
     e.data = { snake: this.snake };
   }
   onGetWalls(e) {
-    e.data = { walls: { wallHor: this.wallHor, wallVert: this.wallVert } };
+    e.data = {
+      walls: [this.wallHor, this.wallHor2, this.wallVert, this.wallVert2],
+    };
   }
   onGetFood(e) {
     e.data = { food: this.food };
