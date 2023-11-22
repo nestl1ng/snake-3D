@@ -2,24 +2,16 @@ import Snake from "./Snake";
 import * as THREE from "three";
 
 export default class SnakeHead extends Snake {
-  constructor(snakePartWidth, name, eventBus, snakeWidth) {
+  constructor(snakePartWidth, name, eventBus, snakeWidth, camera) {
     super(snakePartWidth, name, eventBus);
     this._snakePartWidth = snakePartWidth;
     this._name = name;
     this._eventBus = eventBus;
+    this._camera = camera;
+    this._cameraOffset = new THREE.Vector3(0, -10, -10);
 
     this._snakeWidth = snakeWidth;
     this.mesh;
-    this.fov = 100;
-    this.aspect = window.innerWidth / window.innerHeight;
-    this.near = 0.1;
-    this.far = 100;
-    this.camera = new THREE.PerspectiveCamera(
-      this.fov,
-      this.aspect,
-      this.near,
-      this.far
-    );
   }
 
   draw() {
@@ -27,15 +19,37 @@ export default class SnakeHead extends Snake {
     this.mesh.geometry.computeBoundingBox();
     this.mesh.name += "Head";
     this.mesh.position.y += this._snakePartWidth;
-    this.camera.position.set(0, 10, 7);
-    this.mesh?.add(...super.makeDots(), ...super.makeSquareDots(), this.camera);
-    this.areaSquare = super.areaSquare(super.getWorldPosSquareDots());
+    this.mesh?.add(...super.makeDots(), ...super.makeSquareDots());
+    //this.cameraPos();
     this.worldPosDots = super.getWorldPosDots();
+    this.dispDots();
     return this.mesh;
   }
 
   getWorldPosDots() {
     this.worldPosDots = super.getWorldPosDots();
     return this.worldPosDots;
+  }
+
+  cameraPos() {
+    this._camera.position
+      .copy(this.getWorldPosDots()[1])
+      .add(this._cameraOffset);
+    this._camera.lookAt(this.getWorldPosDots()[1]);
+    this._camera.rotateZ(Math.PI);
+    this.mesh?.add(this._camera);
+  }
+
+  dispDots() {
+    this.snakeHeadDisp = {
+      type: "collision:created",
+      data: {
+        collisionType: "Dots",
+        group: "target",
+        name: this.mesh.name,
+        data: super.getWorldPosSquareDots(),
+      },
+    };
+    this._eventBus.dispatchEvent(this.snakeHeadDisp);
   }
 }

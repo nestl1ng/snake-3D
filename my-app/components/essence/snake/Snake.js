@@ -6,7 +6,7 @@ export default class Snake {
 
     this._snakePartWidth = snakePartWidth;
     this._snakeWidth = snakeWidth;
-    this.name = snakeName;
+    this._name = snakeName;
   }
 
   drawSnake() {
@@ -22,7 +22,7 @@ export default class Snake {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.rotateX(Math.PI);
     this.mesh.geometry.computeBoundingBox();
-    this.mesh.name = this.name;
+    this.mesh.name = this._name;
     return this.mesh;
   }
 

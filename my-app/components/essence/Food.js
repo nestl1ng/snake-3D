@@ -1,10 +1,11 @@
 import * as THREE from "three";
 
 export default class Food {
-  constructor(foodWidth, foodHeight, foodName) {
+  constructor(foodWidth, foodHeight, foodName,eventBus) {
     this._foodWidth = foodWidth;
     this._foodHeight = foodHeight;
-    this.foodName = foodName;
+    this._foodName = foodName;
+    this._eventBus = eventBus;
     this.vectUp = new THREE.Vector3();
     this.vectDown = new THREE.Vector3();
   }
@@ -20,7 +21,7 @@ export default class Food {
     );
     this.material = new THREE.MeshStandardMaterial({ color: 0xebde34 });
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.name = this.foodName;
+    this.mesh.name = this._foodName;
     this.makeDots(this.mesh);
     this.mesh.position.set(
       this.getRandomNum(

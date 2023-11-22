@@ -23,11 +23,25 @@ export default class SnakeBody extends Snake {
       this.mesh.position.z = this._snakePartWidth * 3 * this._count;
     }
     this.mesh?.add(...super.makeDots(), ...super.makeSquareDots());
+    this.dispDots();
     return this.mesh;
   }
 
   getWorldPosDots() {
     this.worldPosDots = super.getWorldPosDots();
     return this.worldPosDots;
+  }
+
+  dispDots() {
+    this.bodyDisp = {
+      type: "collision:created",
+      data: {
+        collisionType: "Dots",
+        group: "etc",
+        name: this._name + this._count,
+        data: this.getWorldPosDots(),
+      },
+    };
+    this._eventBus.dispatchEvent(this.bodyDisp);
   }
 }

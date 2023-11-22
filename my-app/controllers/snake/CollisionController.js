@@ -1,66 +1,72 @@
 export default class CollisionController {
+  groups = {};
+
   constructor({ eventBus, container }) {
     this._container = container;
+    this._eventBus = eventBus;
 
-    this.eventBus = eventBus;
-    this.eventSnake = { type: "getSnake" };
-    this.eventWalls = { type: "getWalls" };
-    this.eventFood = { type: "getFood" };
-    this.eventSpawnController = { type: "getSpawn" };
+    this.onCollisionCreated = this.onCollisionCreated.bind(this);
+    eventBus.addEventListener("collision:created", this.onCollisionCreated);
   }
 
-  getEssence() {
-    this.snake = this.getSnake();
-    this.snakeWidth = this.snake.snakeHead._snakeWidth;
-    this.snakePartWidth = this.snake.snakeHead._snakePartWidth;
+  onCollisionCreated({ data: { collisionType, group, name, data } }) {
+    if (!this.groups[group]) this.groups[group] = {};
 
-    this.wall = this.getWalls();
-    this.food = this.getFood();
-    this.spawn = this.getSpawnController();
+    this.groups[group][name] = { type: collisionType, data };
+    console.log(this.groups);
   }
 
-  snakeAndWalls() {
-    const { snake, wall } = this;
-    this.snakeHeadSquareDots = snake.snakeHead.getWorldPosSquareDots();
-    this.polHead = this.poligonMass(this.snakeHeadSquareDots);
+  update() {
+    //console.log(this.groups.target.SnakeHead.data[0]);
+    const groups = Object.entries(this.groups);
+    let i = groups.length;
+    while (i--) {
+      const item = groups[i];
+      const [groupName, entries] = item;
+      Object.entries(entries).forEach(([collisionName, collisionData]) => {
+        groups.forEach(([name, entries]) => {
+          if (name === groupName) return;
+          Object.entries(entries).forEach(
+            ([sCollisionName, sCollisionData]) => {
+              const isCollide = this.check(sCollisionData, collisionData);
+              if (isCollide) {
+                //TODO:dispatch
+              }
+            }
+          );
+        });
+      });
+      groups.splice(i, 1);
+    }
+  }
+
+  check(target, obj) {
+    this.polTarget = this.poligonMass(target);
     this.flag = [];
-    for (let i = 0; i < wall.length; i++) {
-      this.walls = wall[i].getWorldPosDots();
-      this.polWall = this.poligonMass(this.walls);
-      this.flag.push(this.poligonIntersection(this.polHead, this.polWall));
+    for (let i = 0; i < obj.length; i++) {
+      this.polObj = this.poligonMass(obj[i]);
+      this.flag.push(this.poligonIntersection(this.polTarget, this.polObj));
     }
-    for (let i = 0; i < wall.length; i++) {
-      if (this.flag[i]) return true;
-    }
-    return false;
-  }
-
-  snakeAndFood() {
-    const { snake, food } = this;
-    this.foodDots = food.getWorldPosDots();
-    this.snakeHeadSquareDots = snake.snakeHead.getWorldPosSquareDots();
-    this.polHead = this.poligonMass(this.snakeHeadSquareDots);
-    this.polFood = this.poligonMass(this.foodDots);
-    if (this.poligonIntersection(this.polHead, this.polFood)) {
-      return true;
+    for (let i = 0; i < obj.length; i++) {
+      if (this.flag[i]) {
+        return true;
+      }
     }
     return false;
   }
 
-  snakeSelf() {
-    const { snake } = this;
-    this.snakeHeadSquareDots = snake.snakeHead.getWorldPosSquareDots();
-    this.polHead = this.poligonMass(this.snakeHeadSquareDots);
+  checkCollision(target, obj, event) {
+    this.polTarget = this.poligonMass(target);
     this.flag = [];
-    for (let i = 1; i < snake.snakeBody.length; i++) {
-      this.bodys = snake.snakeBody[i].getWorldPosSquareDots();
-      this.polBody = this.poligonMass(this.bodys);
-      this.flag.push(this.poligonIntersection(this.polHead, this.polBody));
+    for (let i = 0; i < obj.length; i++) {
+      this.polObj = this.poligonMass(obj[i]);
+      this.flag.push(this.poligonIntersection(this.polTarget, this.polObj));
     }
-    for (let i = 0; i < snake.snakeBody.length - 1; i++) {
-      if (this.flag[i]) return true;
+    for (let i = 0; i < obj.length; i++) {
+      if (this.flag[i]) {
+        this._eventBus.dispatchEvent(event);
+      }
     }
-    return false;
   }
 
   //poligons
@@ -109,37 +115,5 @@ export default class CollisionController {
       }
     }
     return true;
-  }
-
-  //getters
-  getSnake() {
-    this.eventBus.dispatchEvent(this.eventSnake);
-    const {
-      data: { snake },
-    } = this.eventSnake;
-    if (snake === undefined) return;
-    return snake;
-  }
-  getWalls() {
-    this.eventBus.dispatchEvent(this.eventWalls);
-    const {
-      data: { walls },
-    } = this.eventWalls;
-    if (walls === undefined) return;
-    return walls;
-  }
-  getFood() {
-    this.eventBus.dispatchEvent(this.eventFood);
-    const {
-      data: { food },
-    } = this.eventFood;
-    return food;
-  }
-  getSpawnController() {
-    this.eventBus.dispatchEvent(this.eventSpawnController);
-    const {
-      data: { spawn },
-    } = this.eventSpawnController;
-    return spawn;
   }
 }

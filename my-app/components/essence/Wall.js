@@ -1,21 +1,23 @@
 import * as THREE from "three";
 
 export default class Wall {
-  constructor(wallWidth, wallHeight, wallName) {
-    this.wallWidth = wallWidth;
-    this.wallHeight = wallHeight;
+  constructor(wallWidth, wallHeight, wallName, eventBus, count) {
+    this._wallWidth = wallWidth;
+    this._wallHeight = wallHeight;
+    this._wallName = wallName;
+    this._eventBus = eventBus;
+    this._count = count;
     this.wallShape = new THREE.Shape();
     this.color = 0x4d5bd6;
-    this.wallName = wallName;
     this.deph = 0.2;
   }
 
   drawWall() {
-    this.wallShape.moveTo(-this.wallWidth / 2, 0);
-    this.wallShape.lineTo(this.wallWidth / 2, 0);
-    this.wallShape.lineTo(this.wallWidth / 2, this.wallHeight);
-    this.wallShape.lineTo(-this.wallWidth / 2, this.wallHeight);
-    this.wallShape.lineTo(-this.wallWidth / 2, 0);
+    this.wallShape.moveTo(-this._wallWidth / 2, 0);
+    this.wallShape.lineTo(this._wallWidth / 2, 0);
+    this.wallShape.lineTo(this._wallWidth / 2, this._wallHeight);
+    this.wallShape.lineTo(-this._wallWidth / 2, this._wallHeight);
+    this.wallShape.lineTo(-this._wallWidth / 2, 0);
     this.wallGeometry = new THREE.ExtrudeGeometry([this.wallShape], {
       steps: 1,
       depth: this.deph,
@@ -26,8 +28,9 @@ export default class Wall {
       this.wallGeometry,
       new THREE.MeshStandardMaterial({ color: this.color })
     );
-    this.wall.name = this.wallName;
+    this.wall.name = this._wallName;
     this.wall.add(...this.makeDots());
+    this.dispDots();
     return this.wall;
   }
 
@@ -39,13 +42,13 @@ export default class Wall {
     this.dotDown = this.dotUp.clone();
     this.dotDown.name = "DotDown";
     this.dotUp.position.set(
-      -this.wallWidth / 2 + this.deph,
-      this.wallHeight / 2,
+      -this._wallWidth / 2 + this.deph,
+      this._wallHeight / 2,
       this.deph
     );
     this.dotDown.position.set(
-      this.wallWidth / 2 - this.deph,
-      this.wallHeight / 2,
+      this._wallWidth / 2 - this.deph,
+      this._wallHeight / 2,
       this.deph
     );
     this.wallsDots = [this.dotUp, this.dotDown];
@@ -61,5 +64,18 @@ export default class Wall {
       this.vect = new THREE.Vector3();
     }
     return this.dots;
+  }
+
+  dispDots() {
+    this.wallsDisp = {
+      type: "collision:created",
+      data: {
+        collisionType: "Dots",
+        group: "etc",
+        name: this._wallName + this._count,
+        data: this.getWorldPosDots(),
+      },
+    };
+    this._eventBus.dispatchEvent(this.wallsDisp);
   }
 }
