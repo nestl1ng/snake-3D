@@ -46,7 +46,7 @@ export default class Food {
     mesh.add(this.dotUp, this.dotDown);
     this.dotDown.position.set(-this._foodWidth, 0, 0);
     this.dotUp.position.set(this._foodWidth, 0, 0);
-    this.FoodDots = [this.dotUp, this.dotDown];
+    this.foodDots = [this.dotUp, this.dotDown];
   }
 
   getRandomNum(min, max) {
@@ -60,8 +60,8 @@ export default class Food {
   }
 
   getWorldPosDots() {
-    this.FoodDots[0].getWorldPosition(this.vectUp);
-    this.FoodDots[1].getWorldPosition(this.vectDown);
+    this.foodDots[0].getWorldPosition(this.vectUp);
+    this.foodDots[1].getWorldPosition(this.vectDown);
     return [this.vectUp, this.vectDown];
   }
 }

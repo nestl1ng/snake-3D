@@ -69,7 +69,7 @@ export default class Snake {
     return this.snakeSquareDots;
   }
 
-  getWorldPosSquareDots() {
+  getWorldPosDots() {
     this.squarePoint = new THREE.Vector3();
     this.squarePoints = [];
     for (let i = 0; i < 4; i++) {
@@ -80,7 +80,7 @@ export default class Snake {
     return this.squarePoints;
   }
 
-  getWorldPosDots() {
+  getWrldUpDownDots() {
     this.vect = new THREE.Vector3();
     this.vectors = [];
     for (let i = 0; i < 2; i++) {

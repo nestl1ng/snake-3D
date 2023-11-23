@@ -4,7 +4,7 @@ export default class Wall {
   constructor(wallWidth, wallHeight, wallName, eventBus, count) {
     this._wallWidth = wallWidth;
     this._wallHeight = wallHeight;
-    this._wallName = wallName;
+    this._wallName = wallName + count;
     this._eventBus = eventBus;
     this._count = count;
     this.wallShape = new THREE.Shape();
@@ -30,7 +30,7 @@ export default class Wall {
     );
     this.wall.name = this._wallName;
     this.wall.add(...this.makeDots());
-    this.dispDots();
+    //this.dispDots();
     return this.wall;
   }
 
@@ -66,16 +66,16 @@ export default class Wall {
     return this.dots;
   }
 
-  dispDots() {
-    this.wallsDisp = {
-      type: "collision:created",
-      data: {
-        collisionType: "Dots",
-        group: "etc",
-        name: this._wallName + this._count,
-        data: this.getWorldPosDots(),
-      },
-    };
-    this._eventBus.dispatchEvent(this.wallsDisp);
-  }
+  // dispDots() {
+  //   this.wallsDisp = {
+  //     type: "collision:created",
+  //     data: {
+  //       collisionType: "Dots",
+  //       group: "etc",
+  //       name: this._wallName,
+  //       data: this.getWorldPosDots(),
+  //     },
+  //   };
+  //   this._eventBus.dispatchEvent(this.wallsDisp);
+  // }
 }

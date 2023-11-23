@@ -4,13 +4,13 @@ import Food from "../../components/essence/Food";
 import SnakeBody from "../../components/essence/snake/SnakeBody";
 
 export default class SpawnController {
-  constructor({ container, eventBus, camera }) {
+  constructor({ container, eventBus, camera, snakeCam }) {
     this._container = container;
     this._eventBus = eventBus;
     this._camera = camera;
+    this._snakeCam = snakeCam;
     this.count = 4;
-    this.wallsHor = [];
-    this.wallsVert = [];
+    this.wallsMeshes = [];
     this.onGetSnake = this.onGetSnake.bind(this);
     this.onGetWalls = this.onGetWalls.bind(this);
     this.onGetFood = this.onGetFood.bind(this);
@@ -30,7 +30,14 @@ export default class SpawnController {
         this._eventBus,
         i + 1
       );
-      this.wallsHor.push(this.wallHor);
+      this.wallMesh = this.wallHor.drawWall();
+      this.dispatchDots(
+        wallName,
+        this.wallHor._wallName,
+        "target",
+        this.wallHor.wallsDots
+      );
+      this.wallsMeshes.push(this.wallMesh);
     }
     for (let i = 0; i < 2; i++) {
       this.wallVert = new Wall(
@@ -40,26 +47,27 @@ export default class SpawnController {
         this._eventBus,
         i + 1
       );
-      this.wallsVert.push(this.wallVert);
+      this.wallMesh = this.wallVert.drawWall();
+      this.dispatchDots(
+        wallName,
+        this.wallVert._wallName,
+        "target",
+        this.wallVert.wallsDots
+      );
+      this.wallsMeshes.push(this.wallMesh);
     }
 
-    this.wallA = this.wallsHor[0].drawWall();
-    this.wallB = this.wallsHor[1].drawWall();
+    this.wallsMeshes[0].position.set(0, 0, -areaHeight / 2);
+    this.wallsMeshes[1].position.set(0, 0, areaHeight / 2);
 
-    this.wallC = this.wallsVert[0].drawWall();
-    this.wallD = this.wallsVert[1].drawWall();
+    this.wallsMeshes[1].rotateY(-Math.PI);
 
-    this.wallA.position.set(0, 0, -areaHeight / 2);
-    this.wallB.position.set(0, 0, areaHeight / 2);
+    this.wallsMeshes[2].rotateY(-Math.PI / 2);
+    this.wallsMeshes[3].rotateY(Math.PI / 2);
 
-    this.wallB.rotateY(-Math.PI);
-
-    this.wallC.rotateY(-Math.PI / 2);
-    this.wallD.rotateY(Math.PI / 2);
-    this.wallC.position.set(areaWidth / 2, 0, 0);
-    this.wallD.position.set(-areaWidth / 2, 0, 0);
-
-    _container?.add(this.wallA, this.wallB, this.wallC, this.wallD);
+    this.wallsMeshes[2].position.set(areaWidth / 2, 0, 0);
+    this.wallsMeshes[3].position.set(-areaWidth / 2, 0, 0);
+    _container?.add(...this.wallsMeshes);
   }
 
   snakeSpawn(snakePartWidth, snakeWidth, snakeName) {
@@ -82,6 +90,12 @@ export default class SpawnController {
     const { _container } = this;
     this.food = new Food(foodWidth, foodHeight, foodName, this._eventBus);
     this.foodMesh = this.food.drawFood(areaWidth, areaHeight);
+    this.dispatchDots(
+      foodName,
+      this.food._foodName,
+      "target",
+      this.food.foodDots
+    );
     _container?.add(this.foodMesh);
   }
 
@@ -91,11 +105,18 @@ export default class SpawnController {
       snakeName,
       this._eventBus,
       snakeWidth,
-      this._camera
+      this._camera,
+      this._snakeCam
     );
     this.snake["snakeHead"] = this.snakeHead;
-    this.snakeHead = this.snakeHead.draw();
-    this.snakeMeshs.push(this.snakeHead);
+    this.snakeHeadMesh = this.snakeHead.draw();
+    this.dispatchDots(
+      snakeName,
+      this.snakeHead._name,
+      "mainTarget",
+      this.snakeHead.snakeSquareDots
+    );
+    this.snakeMeshs.push(this.snakeHeadMesh);
   }
 
   makeBody(snakePartWidth, snakeWidth, snakeName) {
@@ -108,8 +129,14 @@ export default class SpawnController {
         i
       );
       this.snakeBody.push(this.snakePart);
-      this.snakePart = this.snakePart.draw();
-      this.snakeMeshs.push(this.snakePart);
+      this.snakePartMesh = this.snakePart.draw();
+      this.dispatchDots(
+        snakeName,
+        this.snakePart._name,
+        "target",
+        this.snakePart.snakeSquareDots
+      );
+      this.snakeMeshs.push(this.snakePartMesh);
     }
     this.snake["snakeBody"] = this.snakeBody;
   }
@@ -121,17 +148,25 @@ export default class SpawnController {
       this._snakeName,
       this._eventBus,
       this._snakeWidth,
+      this.snakeBody.length + 1,
       pos
     );
     this.snakeBody.push(this.snakePart);
-    this.snakePart = this.snakePart.draw();
-    this.snakeMeshs.push(this.snakePart);
+    this.snakePartMesh = this.snakePart.draw();
+    this.dispatchDots(
+      this._snakeName,
+      this.snakePart._name,
+      "target",
+      this.snakePart.snakeSquareDots
+    );
+    this.snakeMeshs.push(this.snakePartMesh);
     this.snake["snakeBody"] = this.snakeBody;
-    _container?.add(this.snakePart);
+    _container?.add(this.snakePartMesh);
   }
 
   deleteBody(mesh) {
     const { _container } = this;
+    this.deleteDispatchDots("target", mesh.name);
     _container?.remove(mesh);
     this.snakeBody.pop();
     this.snakeMeshs.pop();
@@ -143,10 +178,38 @@ export default class SpawnController {
   }
   onGetWalls(e) {
     e.data = {
-      walls: [this.wallHor, this.wallHor2, this.wallVert, this.wallVert2],
+      walls: [
+        this.wallsMeshes[0],
+        this.wallsMeshes[1],
+        this.wallsMeshes[3],
+        this.wallsMeshes[4],
+      ],
     };
   }
   onGetFood(e) {
     e.data = { food: this.food };
+  }
+
+  dispatchDots(collisionType, name, group, data) {
+    const dispatch = {
+      type: "collision:created",
+      data: {
+        collisionType: collisionType,
+        group: group,
+        name: name,
+        data: data,
+      },
+    };
+    this._eventBus.dispatchEvent(dispatch);
+  }
+  deleteDispatchDots(group, name) {
+    const dispatch = {
+      type: "collision:delete",
+      data: {
+        group: group,
+        name: name,
+      },
+    };
+    this._eventBus.dispatchEvent(dispatch);
   }
 }

@@ -1,47 +1,29 @@
 import Snake from "./Snake";
 
 export default class SnakeBody extends Snake {
-  constructor(snakePartWidth, name, eventBus, snakeWidth, count) {
+  constructor(snakePartWidth, name, eventBus, snakeWidth, count, pos) {
     super(snakePartWidth, name, eventBus);
     this._snakePartWidth = snakePartWidth;
-    this._name = name;
+    this._name = name + "Body" + count;
     this._eventBus = eventBus;
 
     this._snakeWidth = snakeWidth;
     this._count = count;
     this.mesh;
+    this._pos = pos;
   }
 
   draw() {
     this.mesh = super.drawSnake();
     this.mesh.geometry.computeBoundingBox();
-    this.mesh.name += "Body";
-    if (this._count.isVector3) {
-      this.mesh.position.set(this._count.x, this._count.y, this._count.z);
+    if (this._pos !== undefined) {
+      this.mesh.position.set(this._pos.x, this._pos.y, this._pos.z);
     } else {
       this.mesh.position.y += this._snakePartWidth;
       this.mesh.position.z = this._snakePartWidth * 3 * this._count;
     }
+    this.mesh.name = this._name;
     this.mesh?.add(...super.makeDots(), ...super.makeSquareDots());
-    this.dispDots();
     return this.mesh;
-  }
-
-  getWorldPosDots() {
-    this.worldPosDots = super.getWorldPosDots();
-    return this.worldPosDots;
-  }
-
-  dispDots() {
-    this.bodyDisp = {
-      type: "collision:created",
-      data: {
-        collisionType: "Dots",
-        group: "etc",
-        name: this._name + this._count,
-        data: this.getWorldPosDots(),
-      },
-    };
-    this._eventBus.dispatchEvent(this.bodyDisp);
   }
 }

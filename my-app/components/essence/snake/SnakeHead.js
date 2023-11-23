@@ -2,12 +2,13 @@ import Snake from "./Snake";
 import * as THREE from "three";
 
 export default class SnakeHead extends Snake {
-  constructor(snakePartWidth, name, eventBus, snakeWidth, camera) {
+  constructor(snakePartWidth, name, eventBus, snakeWidth, camera, snakeCam) {
     super(snakePartWidth, name, eventBus);
     this._snakePartWidth = snakePartWidth;
-    this._name = name;
+    this._name = name+"Head";
     this._eventBus = eventBus;
     this._camera = camera;
+    this._snakeCam = snakeCam;
     this._cameraOffset = new THREE.Vector3(0, -10, -10);
 
     this._snakeWidth = snakeWidth;
@@ -17,39 +18,22 @@ export default class SnakeHead extends Snake {
   draw() {
     this.mesh = super.drawSnake();
     this.mesh.geometry.computeBoundingBox();
-    this.mesh.name += "Head";
+    this.mesh.name = this._name;
     this.mesh.position.y += this._snakePartWidth;
     this.mesh?.add(...super.makeDots(), ...super.makeSquareDots());
-    //this.cameraPos();
-    this.worldPosDots = super.getWorldPosDots();
-    this.dispDots();
+    if (this._snakeCam) this.cameraPos();
+    this.worldPosDots = super.getWrldUpDownDots();
     return this.mesh;
   }
 
-  getWorldPosDots() {
-    this.worldPosDots = super.getWorldPosDots();
-    return this.worldPosDots;
-  }
 
   cameraPos() {
     this._camera.position
-      .copy(this.getWorldPosDots()[1])
+      .copy(super.getWrldUpDownDots()[1])
       .add(this._cameraOffset);
-    this._camera.lookAt(this.getWorldPosDots()[1]);
+    this._camera.lookAt(super.getWrldUpDownDots()[1]);
     this._camera.rotateZ(Math.PI);
     this.mesh?.add(this._camera);
   }
 
-  dispDots() {
-    this.snakeHeadDisp = {
-      type: "collision:created",
-      data: {
-        collisionType: "Dots",
-        group: "target",
-        name: this.mesh.name,
-        data: super.getWorldPosSquareDots(),
-      },
-    };
-    this._eventBus.dispatchEvent(this.snakeHeadDisp);
-  }
 }

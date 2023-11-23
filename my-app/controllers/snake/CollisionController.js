@@ -1,23 +1,28 @@
+import { Vector3 } from "three";
+
 export default class CollisionController {
   groups = {};
-
   constructor({ eventBus, container }) {
     this._container = container;
     this._eventBus = eventBus;
 
     this.onCollisionCreated = this.onCollisionCreated.bind(this);
+    this.onCollisionDelete = this.onCollisionDelete.bind(this);
     eventBus.addEventListener("collision:created", this.onCollisionCreated);
+    eventBus.addEventListener("collision:delete", this.onCollisionDelete);
   }
 
   onCollisionCreated({ data: { collisionType, group, name, data } }) {
     if (!this.groups[group]) this.groups[group] = {};
 
     this.groups[group][name] = { type: collisionType, data };
-    console.log(this.groups);
+  }
+
+  onCollisionDelete({ data: { group, name } }) {
+    delete this.groups[group][name];
   }
 
   update() {
-    //console.log(this.groups.target.SnakeHead.data[0]);
     const groups = Object.entries(this.groups);
     let i = groups.length;
     while (i--) {
@@ -28,9 +33,11 @@ export default class CollisionController {
           if (name === groupName) return;
           Object.entries(entries).forEach(
             ([sCollisionName, sCollisionData]) => {
-              const isCollide = this.check(sCollisionData, collisionData);
+              const isCollide = this.check(collisionData, sCollisionData);
               if (isCollide) {
-                //TODO:dispatch
+                this._eventBus.dispatchEvent({
+                  type: sCollisionData.type,
+                });
               }
             }
           );
@@ -41,41 +48,24 @@ export default class CollisionController {
   }
 
   check(target, obj) {
-    this.polTarget = this.poligonMass(target);
-    this.flag = [];
-    for (let i = 0; i < obj.length; i++) {
-      this.polObj = this.poligonMass(obj[i]);
-      this.flag.push(this.poligonIntersection(this.polTarget, this.polObj));
-    }
-    for (let i = 0; i < obj.length; i++) {
-      if (this.flag[i]) {
-        return true;
-      }
+    this.poligonTarget = this.poligonArr(this.getWorldPosDots(target.data));
+    this.poligonObj = this.poligonArr(this.getWorldPosDots(obj.data));
+    this.flag = this.poligonIntersection(this.poligonTarget, this.poligonObj);
+    if (this.flag) {
+      return true;
     }
     return false;
   }
 
-  checkCollision(target, obj, event) {
-    this.polTarget = this.poligonMass(target);
-    this.flag = [];
-    for (let i = 0; i < obj.length; i++) {
-      this.polObj = this.poligonMass(obj[i]);
-      this.flag.push(this.poligonIntersection(this.polTarget, this.polObj));
-    }
-    for (let i = 0; i < obj.length; i++) {
-      if (this.flag[i]) {
-        this._eventBus.dispatchEvent(event);
-      }
-    }
+  getWorldPosDots(arr) {
+    return arr.map((dot) => dot.getWorldPosition(new Vector3()));
   }
 
   //poligons
-  poligonMass(mass) {
-    let polMass = [];
-    for (let i = 0; i < mass.length; i++) {
-      polMass.push({ x: mass[i].x, y: mass[i].z });
-    }
-    return polMass;
+  poligonArr(arr) {
+    return arr.map(val => {
+      return { x: val.x, y: val.z };
+    });
   }
 
   poligonIntersection(a, b) {
