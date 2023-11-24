@@ -35,7 +35,7 @@ export default class Wall {
   }
 
   makeDots() {
-    this.geometryDot = new THREE.CapsuleGeometry(0.2, 0.2, 10, 10);
+    this.geometryDot = new THREE.CapsuleGeometry(0.01, 0.01, 1, 1);
     this.materialDot = new THREE.MeshStandardMaterial({ color: 0x9426de });
     this.dotUp = new THREE.Mesh(this.geometryDot, this.materialDot);
     this.dotUp.name = "DotUp";

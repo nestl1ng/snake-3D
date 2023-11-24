@@ -1,5 +1,6 @@
 "use client";
 import * as THREE from "three";
+import { OptionsGame } from "../../components/options";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import SpawnController from "./SpawnController";
 import { inputController } from "../InputController/InputController";
@@ -17,14 +18,16 @@ export default class GameSnake {
   static _instance = null;
 
   constructor() {
+    this.settings = OptionsGame;
+    const { settings } = this;
     //Level Options
-    this.fov = 100;
+    this.fov = settings.level.fov;
     this.aspect = window.innerWidth / window.innerHeight;
-    this.near = 0.1;
-    this.far = 100;
-    this.areaWidth = 40;
-    this.areaHeight = 30;
-    this.boxDepth = 1;
+    this.near = settings.level.near;
+    this.far = settings.level.far;
+    this.areaWidth = settings.level.areaWidth;
+    this.areaHeight = settings.level.areaHeight;
+    this.boxDepth = settings.level.boxDepth;
     this.inputController = inputController;
 
     this.onWindowResize = this.onWindowResize.bind(this);
@@ -33,25 +36,24 @@ export default class GameSnake {
     this.renderScene = this.renderScene.bind(this);
 
     //Essences Options
-    this.snakeWidth = 3;
-    this.snakePartWidth = 0.5;
-    this.wallHeight = 2;
-    this.foodWidth = 0.5;
-    this.foodHeight = 0.1;
-    this.snakeCam = false;
-    this.snakeName = "Snake";
-    this.wallName = "Wall";
-    this.foodName = "Food";
+    this.snakeWidth = settings.essences.snakeWidth;
+    this.snakePartWidth = settings.essences.snakePartWidth;
+    this.wallHeight = settings.essences.wallHeight;
+    this.foodWidth = settings.essences.foodWidth;
+    this.foodHeight = settings.essences.foodHeight;
+    this.snakeCam = settings.essences.snakeCam;
+    this.snakeName = settings.essences.snakeName;
+    this.wallName = settings.essences.wallName;
+    this.foodName = settings.essences.foodName;
 
     //Events
-    this.eventSnake = { type: "getSnake" };
-    this.eventWalls = { type: "getWalls" };
-    this.eventFood = { type: "getFood" };
+    this.eventSnake = settings.events.eventSnake;
+    this.eventWalls = settings.events.eventWalls;
+    this.eventFood = settings.events.eventFood;
 
     //Rotation
-    this.speed = 10;
-    this.rotateAngle = Math.PI *1.2;
-    this.step;
+    this.speed = settings.rotation.speed;
+    this.rotateAngle = settings.rotation.rotateAngle;
   }
 
   webGLRenderer() {
@@ -59,35 +61,47 @@ export default class GameSnake {
   }
 
   initializationAction() {
+    const { settings } = this;
     this.eventBus = new THREE.EventDispatcher();
 
+    //Camera
     this.camera = new THREE.PerspectiveCamera(
       this.fov,
       this.aspect,
       this.near,
       this.far
     );
-    this.cameraOffset = new THREE.Vector3(0, 10, 7);
+    this.cameraOffset = new THREE.Vector3(
+      settings.camera.offset.x,
+      settings.camera.offset.y,
+      settings.camera.offset.z
+    );
 
+    //Scene
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(settings.level.backgroundColor);
     this.raycaster = new THREE.Raycaster();
-    this.mouse = new THREE.Vector2();
-    this.scene.background = new THREE.Color(0xcccccc);
 
-    this.light = new THREE.DirectionalLight(0xffffff, 1.5);
+    //Lights
+    this.light = new THREE.DirectionalLight(
+      settings.light.color,
+      settings.light.intensity
+    );
     this.light2 = this.light.clone();
     this.light3 = this.light.clone();
 
+    //Ground
     this.groundGeometry = new THREE.PlaneGeometry(
       this.areaWidth,
       this.areaHeight
     );
     this.groundMaterial = new THREE.MeshStandardMaterial({
-      color: 0x42d4f5,
+      color: settings.level.groundColor,
       side: THREE.DoubleSide,
     });
     this.ground = new THREE.Mesh(this.groundGeometry, this.groundMaterial);
 
+    //Clock
     this.clock = new THREE.Clock();
 
     //Controllers
@@ -105,15 +119,19 @@ export default class GameSnake {
   }
 
   initLevelAction() {
-    const { spawnController, inputController } = this;
+    const { spawnController, inputController, settings } = this;
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.lightsSet();
     this.scene.add(this.ground, this.light, this.light2, this.light3);
-    this.renderer.render(this.scene, this.camera);
     this.ground.rotateX(Math.PI / 2);
+    this.renderer.render(this.scene, this.camera);
     if (!this.snakeCam) {
-      this.camera.position.set(0, 5, 5);
+      this.camera.position.set(
+        settings.camera.debugPosition.x,
+        settings.camera.debugPosition.y,
+        settings.camera.debugPosition.z
+      );
       this.camera.position.add(this.cameraOffset);
       this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     }
@@ -130,7 +148,6 @@ export default class GameSnake {
       this.snakeWidth,
       this.snakeName
     );
-
     spawnController.foodSpawn(
       this.foodWidth,
       this.foodHeight,
@@ -157,6 +174,7 @@ export default class GameSnake {
   }
 
   //Additional
+
   collisionListeners() {
     //walls
     this.eventBus.addEventListener(this.wallName, this.restartGame);
@@ -190,7 +208,7 @@ export default class GameSnake {
   renderScene() {
     window.requestAnimationFrame(this.renderScene);
     // this._tick = (this._tick ?? 0) + 1;
-    // if (this._tick % 10) return;
+    // if (this._tick % 5) return;
 
     this.delta = this.clock.getDelta();
 
@@ -204,6 +222,7 @@ export default class GameSnake {
 
   snakeMove() {
     const { snake, food, inputController } = this;
+    //this.bodyToHead();
     if (inputController.isActionActive("up")) {
       this.bodyToHead();
     }
